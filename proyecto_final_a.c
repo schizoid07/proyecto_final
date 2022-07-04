@@ -5,7 +5,6 @@
 
 int menu();
 
-system(cls);
 
 
 
