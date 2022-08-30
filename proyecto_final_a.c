@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 int menu(); //Función correspondiente al menú principal
 
 int menu_productos (int user); /*Función que ejecuta un sub-menú 
@@ -57,7 +56,7 @@ int main () {//Función principal
     break;
 
   default:
-    printf("Opcion no existente"); //Mensaje en caso de ingresar una respuesta no esperada
+    printf("Opcion no existente");//Mensaje en caso de ingresar una respuesta no esperada
     break;
   }
   } while (elect != 5);/*Un bucle que no finalizará hasta 
