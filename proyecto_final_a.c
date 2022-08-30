@@ -11,6 +11,12 @@ int menu_productos (int user); /*Función que ejecuta un sub-menú
 void continuar();//Función que pausa la ejecución hasta que el usuario indique
 void creaStock();//Función que genera un archivo con el stock de productos
 void imprimeStock();//Función que imprime el stock de productos
+void modificarPrecio();
+void modificarCantidad();
+void modificarNombre();
+void modificarCodigo();
+void vaciaStoctk();
+void menuModificar();
 
 typedef struct datosUsuario //struct dedicado a los datos de cada usuario
 {
@@ -19,16 +25,16 @@ typedef struct datosUsuario //struct dedicado a los datos de cada usuario
 } d_usuario;
 typedef struct datosProducto //struct dedicado a los datos de cada productos
 {
-  char nombre[15];
-  int unidades;
+  char nombre[100];
+  int unidades, codigo;
   float precio;
 } d_producto;
 
 int main () {//Función principal
-  int elect;
+  int elect, op1;
   do
   {
-    elect = menu_productos(1); //Lamada al sub-menú de productos
+    elect = menu_productos(1); //Llamada al sub-menú de productos
   switch (elect)
   {
   case 1:
@@ -40,14 +46,22 @@ int main () {//Función principal
     break;
 
   case 3:
+    menuModificar();
+    break;
+
+  case 4:
+    vaciaStock();
+    break;
+  
+  case 5:
     break;
 
   default:
     printf("Opcion no existente"); //Mensaje en caso de ingresar una respuesta no esperada
     break;
   }
-  } while (elect != 3);/*Un bucle que no finalizará hasta 
-                        que el usurio indique, por lo que 
+  } while (elect != 5);/*Un bucle que no finalizará hasta 
+                        que el usuario indique, por lo que 
                         el programa mostrará el menú constantemente*/
   
   return 0;
@@ -61,11 +75,11 @@ int menu_productos(int user)
   if(user == 1)
   {
     printf("\nBienvenido al sub-menu de productos para usuarios");
-    printf("\nDigite según sus necesidades:");
+    printf("\nDigite segun sus necesidades:");
     printf("\n____________________________________________________");
     printf("\n1 - Si desea revisar el stock de productos");
-    printf("\n2 - Si desea añadir productos al stock");
-    printf("\n3 - Si desea retirar productos del stock");
+    printf("\n2 - Si desea anadir productos al stock");
+    printf("\n3 - Si desea modificar productos del stock");
     printf("\n4 - Si desea vaciar el stock");
     printf("\n5 - Si desea salir del sistema\n");
     scanf("%d", &election); //Guarda la elección del usuario
@@ -91,10 +105,9 @@ int menu_productos(int user)
   }
   return election;//Devuelve la elección
 }
-
 void continuar()
 {
-  printf("\n\npresione cualquier tecla para continuar");/*Un mensaje para indicar a el usuario 
+  printf("\n\n");/*Un mensaje para indicar a el usuario 
                                                           qué hacer cuando se pause el programa*/
   system("pause");//Pausa el programa
 }
@@ -107,6 +120,7 @@ void creaStock()
   archivo=fopen("Stock.db", "ab"); /*Busca un archivo llamado Stock, debido a los atributos 
                                     en caso de no existir lo crea y en caso de que sí, todo 
                                     lo que se escriba se añade al archivo existente en binario*/
+
   d_producto control;//Struct para el control del stock
 
   if (archivo == NULL)
@@ -117,8 +131,11 @@ void creaStock()
   {
     do
     {
-        printf("\nDigite el nombre del producto: ");
-        scanf("%s", &control.nombre);
+        puts("\nDigite el nombre del producto: ");
+        fflush(stdin);
+        gets(control.nombre);
+        printf("\nDigite el codigo del producto:");
+        scanf("%d", &control.codigo);
         printf("\nDigite las existencias del producto: ");
         scanf("%d", &control.unidades);
         printf("\nDigite el precio del producto: ");
@@ -143,7 +160,6 @@ void creaStock()
 
   }
   fclose(archivo);//Cierra archivo
-  continuar();
 }
 void imprimeStock()
 {
@@ -152,7 +168,7 @@ void imprimeStock()
     int j = 0, itera = 0;
     FILE *archivo;
 
-    archivo = fopen("Stock.db", "rb");//Abre el archivo Stock uncicamente para lectura de datos en binario
+    archivo = fopen("Stock.db", "rb");//Abre el archivo Stock unicamente para lectura de datos en binario
     d_producto imp;
     
     if (archivo == NULL)
@@ -162,10 +178,12 @@ void imprimeStock()
     else
     {
       fread(&imp, sizeof(d_producto), 1, archivo);//Lee archivo
+      
         while(!feof(archivo)&&!ferror(archivo))/*Un bucle que no va a terminar hasta que se encuentre 
                                                 con el final del archivo o algún tipo de error*/
         {
           printf("\nProducto: %s", imp.nombre);
+          printf("\nCodigo: %d", imp.codigo);
           printf("\nExistencias: %d", imp.unidades);
           printf("\nPrecio: %.2f", imp.precio);
           printf("\n_________________________________");
@@ -174,4 +192,250 @@ void imprimeStock()
       fclose(archivo);//Cierra el archivo
     }
     continuar();
+}
+void modificarPrecio() 
+{
+  system("cls");
+  int producto=0, existe=0;
+  char a;
+  FILE *archivo;
+  d_producto modifx;
+  archivo=fopen("Stock.db", "r+b");
+  if(archivo==NULL)
+  {
+    printf("\nHa ocurrido un error al abrir el archivo Stock.db");
+  }
+  else
+  {
+    printf("\nCual es el codigo del producto a modificar?");
+    scanf("%d", &producto);
+    fread(&modifx, sizeof(d_producto), 1, archivo);
+      while(!feof(archivo))
+      {
+        if(producto==modifx.codigo)
+        {
+          printf("\nProducto: %s", modifx.nombre);
+          printf("\nCodigo: %d", modifx.codigo);
+          printf("\nExistencias: %d", modifx.unidades);
+          printf("\nPrecio: %.2f", modifx.precio);
+          printf("\n_________________________________");
+          printf("\nIngrese el nuevo precio del producto\n");
+          scanf("%f", &modifx.precio); 
+          int n = ftell(archivo) - sizeof(d_producto);
+          fseek(archivo, n, SEEK_SET);
+          fwrite(&modifx, sizeof(d_producto), 1, archivo);
+          existe = 1;
+          break;
+        }
+        fread(&modifx, sizeof(d_producto), 1, archivo);
+      }
+    if(existe==0)
+    {
+      printf("\nNo se encontro ningun producto que conincida con el codigo ingresado");    
+    }  
+    fclose(archivo);
+    continuar();
+  }
+}
+void modificarNombre()
+{
+  system("cls");
+  int  codigo, existe=0;
+  char a, producto[30];
+  FILE *archivo;
+  d_producto modifx;
+  archivo=fopen("Stock.db", "r+b");
+  if(archivo==NULL)
+  {
+    printf("\nHa ocurrido un error al abrir el archivo Stock.db");
+  }
+  else
+  {
+    printf("\nCual es el codigo del producto a modificar?");
+    scanf("%d", &codigo);
+
+    fread(&modifx, sizeof(d_producto), 1, archivo);
+      while(!feof(archivo) && !ferror(archivo))
+      {
+        if(codigo==modifx.codigo)
+        {
+          printf("\nProducto: %s", modifx.nombre);
+          printf("\nCodigo: %d", modifx.codigo);
+          printf("\nExistencias: %d", modifx.unidades);
+          printf("\nPrecio: %.2f", modifx.precio);
+          printf("\n_________________________________");
+          printf("\nIngres el el nuevo nombre del producto\n");
+          fflush(stdin);
+          gets(modifx.nombre);
+          int n = ftell(archivo) - sizeof(d_producto);
+          fseek(archivo, n, SEEK_SET);
+          fwrite(&modifx, sizeof(d_producto), 1, archivo);
+          existe=1;
+          break; 
+        }
+        fread(&modifx, sizeof(d_producto), 1, archivo);
+      }
+    if(existe==0)
+    {
+      printf("\nNo se encontro ningun producto que conincida con el codigo ingresado");    
+    }  
+    fclose(archivo);
+    continuar();
+  }
+  
+}
+void modificarCantidad()
+{
+  system("cls");
+  int producto, existe = 0;
+  char a;
+  FILE *archivo;
+  d_producto modifx;
+  archivo=fopen("Stock.db", "r+b");
+  if(archivo==NULL)
+  {
+    printf("\nHa ocurrido un error al abrir el archivo Stock.db");
+  }
+  else
+  {
+    printf("\nCual es el codigo del producto a modificar?");
+    scanf("%d", &producto);
+    fread(&modifx, sizeof(d_producto), 1, archivo);
+      while(!feof(archivo) && !ferror(archivo))
+      {
+        if(producto==modifx.codigo)
+        {
+          printf("\nProducto: %s", modifx.nombre);
+          printf("\nCodigo: %d", modifx.codigo);
+          printf("\nExistencias: %d", modifx.unidades);
+          printf("\nPrecio: %.2f", modifx.precio);
+          printf("\n_________________________________");
+          printf("\nIngrese la cantidad de existencias del producto?\n");
+          scanf("%d", &producto); 
+          modifx.unidades=producto;
+          int n = ftell(archivo) - sizeof(d_producto);
+          fseek(archivo, n, SEEK_SET);
+          fwrite(&modifx, sizeof(d_producto), 1, archivo);
+          printf("\nSe ha modificado con exito el producto."); 
+          existe=1;
+          break;     
+        }
+        fread(&modifx, sizeof(d_producto), 1, archivo);
+      }
+    if(existe==0)
+    {
+      printf("\nNo se encontro ningun producto que conincida con el codigo ingresado");   
+    }  
+    fclose(archivo);
+    continuar();
+  }
+}
+void modificarCodigo()
+{
+  system("cls");
+  int producto=0, existe=0;
+  char a;
+  FILE *archivo;
+  d_producto modifx;
+  archivo=fopen("Stock.db", "r+b");
+  if(archivo==NULL)
+  {
+    printf("\nHa ocurrido un error al abrir el archivo Stock.db");
+  }
+  else
+  {
+    printf("\nCual es el codigo del producto a modificar?");
+    scanf("%d", &producto);
+    fread(&modifx, sizeof(d_producto), 1, archivo);
+      while(!feof(archivo) && !ferror(archivo))
+      {
+        if(producto==modifx.codigo)
+        {
+          printf("\nProducto: %s", modifx.nombre);
+          printf("\nCodigo: %d", modifx.codigo);
+          printf("\nExistencias: %d", modifx.unidades);
+          printf("\nPrecio: %.2f", modifx.precio);
+          printf("\n_________________________________");
+          printf("\nIngrese el nuevo codigo del producto\n");
+          scanf("%d", &producto); 
+          modifx.codigo=producto;
+          int n = ftell(archivo) - sizeof(d_producto);
+          fseek(archivo, n, SEEK_SET);
+          fwrite(&modifx, sizeof(d_producto), 1, archivo);
+          printf("\nSe ha modificado con éxito el producto.");  
+          existe=1; 
+          break;     
+        }
+        fread(&modifx, sizeof(d_producto), 1, archivo);
+      }
+      if(existe==0)
+        {
+          printf("\nNo se encontro ningun producto que conincida con el codigo ingresado");    
+        }  
+    fclose(archivo);
+    continuar();
+  }
+}
+
+void vaciaStock()
+{
+  system("cls");
+  
+  if (remove("Stock.db") == 0)
+  {
+    printf("\nSu Stock ha sido reestablecido");
+  }
+  else
+  {
+    printf("\nNo se ha podido vaciar el stock");
+  }
+  continuar();
+}
+
+void menuModificar()
+{
+  system("cls");
+  int op1;
+   do
+  {
+    system("cls");
+    printf("\nBienvenido al sub-menu de modificar productos");
+    printf("\nDigite segun sus necesidades:");
+    printf("\n____________________________________________________________________");
+    printf("\n1 - Si desea modificar el precio de un producto");
+    printf("\n2 - Si desea modificar el nombre de un producto");
+    printf("\n3 - Si desea modificar la cantidad de existencias de un producto");
+    printf("\n4 - Si desea modificar el codigo de un producto");
+    printf("\n5 - Si desea volver al submenu de productos\n");
+    scanf("%d", &op1);
+    switch (op1)
+    {
+    case 1:
+      modificarPrecio();
+      break;
+    
+    case 2:
+      modificarNombre();
+      break;
+
+    case 3:
+      modificarCantidad();
+      break;
+
+    case 4:
+      modificarCodigo();
+      break;
+
+    case 5:
+      break;
+    
+    default:
+      printf("\nDigite un valor correspondiente a las opciones brindadas");
+      break;
+    }
+  } while (op1 != 5);
+
+  printf("\nreturn %d",op1);
+  
+  
 }
