@@ -2,6 +2,18 @@
 #include <stdlib.h>
 #include <string.h>
 
+
+                                      /*Funciones*/
+
+/*[1]*/int menuAyuda();//Funcion que ejecuta el submenu de ayuda  
+/*[2]*/void mostrarDatos();//Mostrara el nombre del sistema y los datos de los programadores 
+/*[3]*/void eliminarDatos_programadores();//Eliminara TODA la informacion existente de los programadores
+/*[4]*/void eliminarDatos_sistema();//Eliminara TODA la informacion existente del sistema
+/*[5]*/void modificarDatos_programadores();//Modificara la informacion ya sea del nombre del sistema o de los programadores
+/*[6]*/void modificarDatos_sistema();//Modificara la informacion ya sea del nombre del sistema o de los programadores
+/*[7]*/void introducirDatos_programador();//Sirve para introducir nueva informacion (un nuevo programador  en caso de no existir)
+/*[8]*/void introducirDatos_sistema();//  Sirve para introducir nueva informacion (el nombre del sistema en caso de no existir)
+
 int menu(); //Función correspondiente al menú principal
 
 int menu_productos (int user); /*Función que ejecuta un sub-menú 
@@ -17,6 +29,23 @@ void modificarCodigo();//Función que permite modificar el codigo de un producto
 void vaciaStoctk();//Función que elimina el archivo correspondiente al Stock
 void menuModificar();//Función que invoca un menu el cual se encarga de todas las funciones modificar
 
+
+                             /*------------------------------*/
+
+
+
+                                       /*Structs*/
+typedef struct {
+    char name[50];
+    char id[9];
+} programador;
+
+typedef struct {
+    char nombre_sistema[30];
+    char ano_creacion[4];
+    char semestre_creacion[30];
+} sistema;
+
 typedef struct datosUsuario //struct dedicado a los datos de cada usuario
 {
   char nombre[20], apellido[20], tipoDeCuenta[10];
@@ -28,6 +57,10 @@ typedef struct datosProducto //struct dedicado a los datos de cada productos
   int unidades, codigo;
   float precio;
 } d_producto;
+
+
+                                    /*----------------*/
+
 
 int main () {//Función principal
   int elect, op1;
@@ -64,6 +97,277 @@ int main () {//Función principal
                         el programa mostrará el menú constantemente*/
   
   return 0;
+
+
+
+                                         /*Funcion Main (Miguel-Menu Ayuda)*/
+/*int main () { //Funcion main
+  int decision=0;
+
+do {
+  decision=menuAyuda();
+
+ switch (decision) {
+
+        case 1:
+        mostrarDatos();
+            break;
+
+        case 2:
+        modificarDatos_programadores();
+            break;
+
+        case 3:
+        modificarDatos_sistema();
+            break;
+
+        case 4:
+        eliminarDatos_sistema();
+            break;
+
+        case 5:
+        eliminarDatos_programadores();
+            break;
+
+        case 6:
+        introducirDatos_sistema();
+            break;
+
+        case 7:
+        introducirDatos_programador();
+            break;
+        
+        default:
+        printf("Hasta luego, vuelva pronto :)");
+        break;
+            
+    }
+    } while (decision!=0);
+    
+ return 0;
+} */
+
+
+
+
+
+
+}
+
+
+                                       /*Funciones Adyacentes*/
+/*[1]*/int menuAyuda() { //se encarga de darle las opciones al usuario para elegir que hacer con la informacion del sistema
+    system("cls");
+    int a=0;
+    printf("\t\t\t\tBienvenido al Submenu de ayuda!\n\tIntroduzca el numero correspondiente a la opcion que desee activar:");
+    printf("\n\t[0] Salir.");
+    printf("\n\t[1] Mostrar la informacion del sistema y los datos de los programadores.");
+    printf("\n\t[2] Modificar los datos de los programadores.") ;
+    printf("\n\t[3] Modificar los datos del sistema.") ;
+    printf("\n\t[4] Eliminar los datos del sistema.");
+    printf("\n\t[5] Eliminar  los datos de los programadores.");
+    printf("\n\t[6] Ingresar el nombre del sistema (en caso de no haber) ");
+    printf("\n\t[7] Ingresar datos de los programadores (en caso de no haber)\n");
+    printf("\t\t\t\t<<<");
+    scanf("%d",&a);
+    system("cls");
+    
+    return a;   
+    
+
+}
+
+                            /*-------------------------------*/
+
+
+/*[2]*/void mostrarDatos() {
+    
+    int a=0;
+    programador programer;
+    sistema sistem;
+    FILE *dat_programadores;
+    FILE *dat_sistema;
+    dat_programadores = fopen("programadores.dat","rb"); //Abre el archivo para lectura de datos en binario
+     dat_sistema = fopen("info_sistema.dat","rb");
+    if (dat_programadores == NULL|| dat_sistema == NULL) {
+    printf("Ha ocurrido un problema al abrir el archivo o el archivo esta vacio\n");
+    } else {
+
+        while (fread(&sistem, sizeof(sistem),1,dat_sistema)!=0) {
+            printf("\t\tNombre del Sistema: %s\n\t\tAño de creacion: %s\n\t\tSemestre de Creacion: %s\n\n",sistem.nombre_sistema,sistem.ano_creacion,sistem.semestre_creacion);
+        }
+
+        while (fread(&programer, sizeof(programador),1,dat_programadores)!=0) {
+            a+=1;
+            printf("\t\tprogramador [%d]: \n\t\tNombre: %s\n\t\tCedula: %s\n\n",a,programer.name,programer.id);
+        }        
+
+    }
+fclose(dat_programadores);
+fclose( dat_sistema);
+system("pause");
+}
+
+
+                            /*-------------------------------*/
+
+/*[3]*/void eliminarDatos_programadores() {
+     system("cls");
+    FILE *dat_programadores;
+        dat_programadores = fopen("programadores.dat","wb");  
+    if (dat_programadores == NULL) {
+    printf("\n\t\tHa ocurrido un problema al abrir el archivo\n");
+    } else {
+        system("cls");
+        printf("\nLos datos se han borrado exitosamente.\n");
+    }
+fclose(dat_programadores);
+system("pause");
+}
+
+                            /*-------------------------------*/
+
+/*[4]*/void eliminarDatos_sistema() {
+    FILE *dat_programadores;
+        dat_programadores = fopen("info_sistema.dat","wb");  
+    if (dat_programadores == NULL) {
+    printf("Ha ocurrido un problema al abrir el archivo\n");
+    } else {
+        system("cls");
+        printf("\n\t\tLos datos se han borrado exitosamente.\n");
+    }
+fclose(dat_programadores);
+system("pause");
+}
+
+                            /*-------------------------------*/
+
+
+/*[5]*/void modificarDatos_programadores() {
+    system("cls");
+    char continuar; int pos=0;
+ FILE *dat_programadores;
+  dat_programadores = fopen("programadores.dat","r+b");  
+    if (dat_programadores == NULL) {
+    printf("Ha ocurrido un problema al abrir el archivo\n");
+    } else {
+        do { 
+            printf("\t\tInteroduzca el numero del programador que desea modificar (Ejemplo: [1] -> Primer programador): ");
+            
+            scanf("%d",&pos);
+            int salto=(pos-1)*(sizeof(programador));
+            fseek(dat_programadores, salto, 0);
+            programador programer;
+            printf("Introduzca la nueva informacion del programador a modificar (en caso de ser la misma, repita): \n");
+            printf("Nombre:\t<<<");
+            scanf("%s",&programer.name);
+            printf("\nCedula:\t<<<");
+            scanf("%s",&programer.id);
+            fwrite(&programer, sizeof(programador), 1, dat_programadores);
+            system("cls");
+            printf("\n\t\tEl proceso ha sido exitoso :)\n");
+            printf("\n\t\tDesea continuar modificando? [S/N]: ");
+            scanf("%c",&continuar);
+        } while (continuar=='S'||continuar=='s');
+        
+    }
+    fclose(dat_programadores);
+    system("pause");
+
+}
+
+
+
+                            /*-------------------------------*/
+
+/*[6]*/void modificarDatos_sistema() {
+     system("cls");
+    char continuar; int pos=0;
+ FILE *dat_sistema;
+  dat_sistema = fopen("info_sistema.dat","r+b");  
+    if (dat_sistema == NULL) {
+    printf("Ha ocurrido un problema al abrir el archivo\n");
+    } else {
+        do { 
+            printf("\t\tInteroduzca el numero del programador que desea modificar \n(Ejemplo: [1] -> Primer programador): ");
+            scanf("[%d]",&pos);
+            int salto=(pos-1)*(sizeof(programador));
+            fseek(dat_sistema, salto, 0);
+            sistema sistem;
+            printf("Introduzca la nueva informacion del sistema (en caso de ser la misma, repita) ");
+            printf("\nNombre del sistema:\t<<<");
+            scanf("%s",&sistem.nombre_sistema);
+            printf("\naño de creacion del sistema::\t<<<");
+            scanf("%s",&sistem.ano_creacion);
+            printf("\nSemestre de Creacion del sistema: \t<<<");
+            scanf("%s",&sistem.semestre_creacion);
+            fwrite(&sistem, sizeof(sistema), 1, dat_sistema);
+            printf("\n\t\tDesea continuar modificando? [S/N]: ");
+            scanf("%c",&continuar);
+
+        } while (continuar=='S'||continuar=='s');
+        
+    }
+    fclose(dat_sistema);
+    system("pause");
+}
+ 
+                             /*-------------------------------*/
+
+
+/*[7]*/void introducirDatos_programador() {
+    system("cls");
+    char continuar; int pos=0;
+ FILE *dat_programadores;
+  dat_programadores = fopen("programadores.dat","ab");  
+    if (dat_programadores == NULL) {
+    printf("Ha ocurrido un problema al abrir el archivo\n");
+    } else {
+        do { 
+            programador programer;
+            printf("Introduzca la informacion del programador a añadir: ");
+            printf("\nNombre del programador: \t<<<");
+            scanf("%s",&programer.name);
+            printf("\nCedula del programador: \t<<<");
+            scanf("%s",&programer.id);
+            fwrite(&programer, sizeof(programador), 1, dat_programadores);
+            printf("\n\t\tDesea continuar añadiendo a mas programadores? [S/N]: ");
+            scanf("%c",&continuar);
+
+        } while (continuar=='S'||continuar=='s');
+            system("cls");
+            printf("\n\t\tEl proceso ha sido exitoso :)\n");
+    }
+    fclose(dat_programadores);
+    system("pause");
+}
+
+                             /*-------------------------------*/
+
+/*[8]*/void introducirDatos_sistema() {
+    system("cls");
+     int pos=0;
+ FILE *dat_sistema;
+  dat_sistema = fopen("info_sistema.dat","rb");  
+    if (dat_sistema == NULL) {
+    printf("Ha ocurrido un problema al abrir el archivo\n");
+    } else {
+            sistema sistem;
+            printf("Introduzca la  informacion del sistema: ");
+            printf("\nNombre del sistema: \t<<<");
+            scanf("%s",&sistem.nombre_sistema); 
+            printf("\nAño de Creacion del sistema: \t<<<");
+            scanf("%s",&sistem.ano_creacion);
+            printf("\nSemestre de Creacion del sistema: \t<<<");
+            scanf("%s",&sistem.semestre_creacion);
+            fwrite(&sistem, sizeof(sistema), 1, dat_sistema);
+            system("cls");
+            printf("\n\t\tEl proceso ha sido exitoso :)\n");
+           
+        
+    }
+    fclose(dat_sistema);
+    system("pause");
 }
 
 int menu_productos(int user)
