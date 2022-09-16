@@ -1,14 +1,9 @@
-include <stdio.h> 
+#include <stdio.h> 
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
-
-
+#include <locale.h> //Sirve para manejador de archivos locales
 #include <string.h>
-
-
-
 
 
 #define MAX 80
@@ -22,6 +17,71 @@ include <stdio.h>
 #define LONGITUD 5
 
 #define MAX_INTENTOS 3
+
+#define VALOR_CENTINELA -1 //Valor usado para eliminar un registro en el archivo de usuarios y clientes
+
+
+//>>>>>>Estructuras Y Funciones para clientes y usuarios<<<<<<<<<<<<<<<<
+
+/* Estructura usuarios */
+struct user {
+	int cedula;
+	char nombre[MAX];
+	char apellido[MAX];
+	char n_usuario[MAX];
+	char password[MAX];
+};
+ 
+typedef struct user User;
+
+/* Estructura cliente */
+struct client {
+	int cedula;
+	char nombre[MAX];
+	char apellido[MAX];
+	int edad;
+	int compras;
+};
+ 
+typedef struct client Client;
+
+ 
+/* Opciones del Menu usuarios */
+void menuUsuarios();
+void menuIngresar_usuario();
+void menuBuscar_usuario();
+void menuModificar_usuario();
+void menuEliminar_usuario();
+
+/* Opciones del Menu Clientes */
+void menuCliente();
+void menuIngresar_cliente();
+void menuBuscar_cliente();
+void menuModificar_cliente();
+void menuEliminar_cliente();
+ 
+/* Funciones para manejar el archivo directamente */
+User *obtenerUsuarios(int *n); /* Obtiene un vector dinamico de usuarios */
+char existeUsuario(int ci, User *usuario); /* Busca si existe el usuarios en el archivo de usuarios */
+char ingresarUsuario(User user); /* Inserta el usuarios al final del archivo */
+char eliminarUsuario(int cedula); /* Eliminar el usuarios de placa placausuarios del archivo */
+char eliminacionFisica_usuario(); /* Realiza la eliminacion fisica de registros invalidos del archivo de usuarios */
+
+/* Funciones para manejar el archivo directamente  de clientes*/
+Client *obtenerClientes(int *n); /* Obtiene un vector dinamico de clientes */
+char existeCliente(int ci, Client *cliente); /* Busca si existe el cliente en el archivo de clientes */
+char ingresarCliente(Client cliente); /* Inserta el clientes al final del archivo */
+char eliminarCliente(int cedula); /* Eliminar el cliente  del archivo */
+char eliminacionFisica_cliente(); /* Realiza la eliminacion fisica de registros invalidos del archivo de clientes */
+ 
+/* Funcion de lectura de cadenas */
+int leecad(char *cad, int n);
+
+char linea[MAX];
+
+//<<<<<<<<<<Fin Funciones Clientes y Usuarios>>>>>>>>>>>>>>>>>
+
+
 int menu(); //FunciÃ³n correspondiente al menÃº principal
 
 int menu_productos (int user); /*FunciÃ³n que ejecuta un sub-menÃº 
@@ -1839,5 +1899,1196 @@ int UltimaFactura(int n_prod) //se pide el número de productos que el usuario c
 }
 
 =======
+
+// >>>>>>>> FUNCIONES USUARIOS <<<<<<<<<<<
+void menuUsuarios()
+{
+	char repite = 1;
+	int opcion = -1;
+	/* Cuando el usuario ingresa texto en lugar de ingresar una opcion. El programa no modifica
+	el valor de opcion. En ese caso, no se debe de ingresar a ninguno de los case, por eso se esta
+	inicializando la variable opcion con un valor que no permita ejecutar ningun case. Simplemente,
+	volver a interar y pedir nuevamente la opcion. */
+ 
+	do {
+ 
+		system( "COLOR 2" );//con esto solo cambiamos el color de nuestra fuente
+		system("cls");
+ 
+ 
+		printf("\n         MENU DE USUARIOS         \n");
+		printf("\n[1] Registrar nuevo usuario \n");
+		printf("\n[2] Buscar datos de usuario \n");
+		printf("\n[3] Modificar informacion de un usuario \n");
+		printf("\n[4] Eliminar un usuario \n");
+		printf("\n[0] Salir\n");
+		printf("\nQue deseas hacer?: [ ]\b\b");
+ 
+		/* Lectura segura de un entero */
+		leecad(linea, MAX);
+		sscanf(linea, "%d", &opcion);
+ 
+		switch (opcion) {
+ 
+			case 1:
+				menuIngresar_usuario();
+				break;
+ 
+			case 2:
+				menuBuscar_usuario();
+				break; 
+ 
+			case 3:
+				menuModificar_usuario();
+				break;
+ 
+			case 5:
+				menuEliminar_usuario();
+				break;
+ 
+			case 0:
+				repite = 0;
+				break;
+		}
+ 
+	} while (repite);
+}
+
+void menuIngresar_usuario()
+{
+	User usuario;
+	int cedula = 0;
+	char repite = 1;
+	char respuesta[MAX];
+ 
+	do {
+		system("cls");
+		printf("SISTEMA DE INGRESO DE USUARIOS \n");
+ 
+		/* Se pide la cedula del usuarios a ingresar */
+		printf("\n\tCedula del usuario: ");
+		leecad(linea, MAX);
+		sscanf(linea, "%d", &cedula);
+ 
+		/* Se verifica que el usuarios no haya sido almacenado anteriormente */
+		
+		if (cedula == 0){
+			printf("\n\tDesea continuar? [S/N]: ");
+			leecad(respuesta, MAX);
+ 
+			if (!(strcmp(respuesta, "S") == 0 || strcmp(respuesta, "s") == 0)) {
+			repite = 0;
+			}
+		}
+		else
+		{
+			if (!existeUsuario(cedula, &usuario)) {
+ 
+				usuario.cedula = cedula;
+	
+				/* Se piden los demas datos del usuarios a ingresar */
+				printf("\tNombre de usuario: ");
+				leecad(usuario.n_usuario, MAX);
+ 
+				printf("\tNombre: ");
+				leecad(usuario.nombre, MAX);
+ 
+				printf("\tApellido: ");
+				leecad(usuario.apellido, MAX);
+ 
+				printf("\tContrase�a: ");
+				leecad(usuario.password, MAX);
+ 
+					/* Se inserta el usuario en el archivo */
+				if (ingresarUsuario(usuario)) {
+				printf("\n\tEl usuario fue insertado correctamente\n");
+ 				}
+			
+				else {
+					printf("\n\tOcurrio un error al intentar ingresar el usuario\n");
+					printf("\tIntentelo mas tarde\n");
+				}
+			}
+
+			else {
+			/* El usuario ya existe, no puede ser insertado. */
+			printf("\n\tEl usuario con la cedula %d ya existe.\n", cedula);
+			printf("\tNo puede ingresar dos usuarios distintos con la misma cedula\n");
+			}
+ 
+			printf("\n\tDesea seguir ingresando usuarios? [S/N]: ");
+			leecad(respuesta, MAX);
+ 
+			if (!(strcmp(respuesta, "S") == 0 || strcmp(respuesta, "s") == 0)) {
+			repite = 0;
+			}
+ 
+		}
+		
+	} while (repite);
+}
+
+void menuBuscar_usuario()
+ {
+	User *usuarios;
+	User usuario;
+	int numeroUsuarios;
+	int cedula;
+	char repite = 1;
+	char respuesta[MAX];
+	
+	system("cls");
+	usuarios = obtenerUsuarios(&numeroUsuarios); /* Retorna un vector dinamico de usuarios */
+
+ 	if (numeroUsuarios == 0) {
+		printf("\n\tEl archivo esta vacio!!\n");
+		system("pause>nul");
+	} 
+	
+	else {		
+		do {
+	
+			system("cls");
+			printf("\n\n\t\t\t BUSCAR USUARIO POR CEDULA \n");
+ 
+			/* Se pide la ci del usuario a buscar */
+			printf("\n\tCedula: ");
+			leecad(linea, MAX);
+			sscanf(linea,"%d", &cedula);
+						
+			if (cedula == 0){
+				printf("\n\tDesea continuar? [S/N]: ");
+				leecad(respuesta, MAX);
+ 
+				if (!(strcmp(respuesta, "S") == 0 || strcmp(respuesta, "s") == 0)) {
+				repite = 0;
+				}
+			}
+
+			else {
+ 
+				/* Se verifica que el usuario a buscar, exista */
+				if (existeUsuario(cedula, &usuario)) {
+
+				/* Se muestran los datos del usuario */
+				printf("\tUsuario: %s \n", usuario.n_usuario);
+				printf("\tNombre: %s\n", usuario.nombre);		
+				printf("\tApellido: %s\n", usuario.apellido);			
+
+				} 
+				else {
+					/* El usuario no existe */
+					printf("\n\tEl usuario con la cedula %d no existe.\n", cedula);
+				};
+ 
+				printf("\n\tDesea seguir buscando algun usuario? [S/N]: ");
+				leecad(respuesta, MAX);
+	
+				if (!(strcmp(respuesta, "S") == 0 || strcmp(respuesta, "s") == 0))
+				{
+					repite = 0;
+				}
+			}
+		}	
+		while (repite);
+	}
+}
+ 
+
+
+void menuModificar_usuario()
+{
+	User *usuarios;
+	int numeroUsuarios;
+	FILE *archivo;
+	User usuario;
+	int cedula;
+	int opcion = -1;
+	char repite = 1;
+	char existe;
+	char respuesta[MAX];
+	
+	system("cls");
+	usuarios = obtenerUsuarios(&numeroUsuarios); /* Retorna un vector dinamico de usuarios */
+
+ 	if (numeroUsuarios == 0) {
+		printf("\n\tEl archivo esta vacio!!\n");
+		system("pause>nul");
+	} 
+	
+	else {		
+ 
+	do {
+		system("cls");
+		printf("\n      MODIFICAR UN USUARIO   \n");
+
+		printf("\t-----------------------------------\n");
+		printf("\t", "OPCIONES PARA MODIFICAR");
+		printf("\t-----------------------------------\n");
+		printf("\t1. Modificar el nombre del usuario \n");
+		printf("\t2. Modificar el apellido del usuario \n");
+		printf("\t3. Modificar la cedula del usuario \n");	
+ 
+		/* Se pide la cedula del usuario a modificar */
+		printf("\n\tCedula del usuario: ");
+		leecad(linea, MAX);
+		sscanf(linea, "%d", &cedula);
+								
+			if (cedula == 0){
+				printf("\n\tDesea continuar? [S/N]: ");
+				leecad(respuesta, MAX);
+ 
+				if (!(strcmp(respuesta, "S") == 0 || strcmp(respuesta, "s") == 0)) {
+				repite = 0;
+				}
+			}
+
+			else {
+
+		/* Se verifica que el usuario a buscar exista */
+		if (existeUsuario(cedula, &usuario)) {
+			
+			/* Se muestran los datos del usuario */
+			printf("\n\tNombre: %s\n", usuario.nombre);
+			printf("\tApellido: %s\n", usuario.apellido);
+			printf("\tCedula: %d\n", usuario.cedula);
+			printf("\n\n        Elija que dato quiere modificar?: [ ]\b\b");
+			leecad(linea, MAX);
+			sscanf(linea, "%d", &opcion);
+
+		/* Abre el archivo para lectura/escritura */
+		archivo = fopen("usuarios.dat", "rb+");
+ 
+		if (archivo == NULL) { /* Si no se pudo abrir el archivo, el valor de archivo es NULL */} 
+		else {
+
+		switch (opcion){
+		
+			case 1:
+				printf("\n Nombre del usuario actual: %s \n", usuario.nombre);
+				printf("\tIngrese nuevo nombre: ");
+				scanf("%s", &usuario.nombre);
+				eliminarUsuario(cedula);
+				eliminacionFisica_usuario();
+  	            fwrite(&usuario, sizeof(User), 1, archivo);
+    	        printf("\tSe modifico el nombre del usuario\n");
+        	   break;
+
+			case 2:
+				printf("\n\tApellido del usuario actual: %s\n", usuario.apellido);
+				printf("\n\tIngrese nuevo el nuevo apellido: ");
+                scanf("%s",&usuario.apellido);
+                eliminarUsuario(cedula);
+				eliminacionFisica_usuario();
+                fwrite(&usuario, sizeof(User), 1, archivo);
+                printf("\tSe modifico el apellido del usuario\n");
+				break;
+
+			case 3:
+				printf("\n\tNumero de cedula actual del usuario: %d\n", usuario.cedula);
+				printf("\n\tIngrese la nueva cedula: ");
+                scanf("%d",&usuario.cedula);
+                eliminarUsuario(cedula);
+				eliminacionFisica_usuario();
+                fwrite(&usuario, sizeof(User), 1, archivo);
+                printf("\tSe modifico la cedula del usuario\n");
+				break;
+
+			}
+
+		}fclose(archivo); }
+
+		else {
+			/* El usuario no existe */
+			printf("\n\tEl usuario de cedula %d no existe.\n", cedula);
+		}
+ 
+		printf("\n\tDesea modificar algun otro usuario? [S/N]: ");
+		leecad(respuesta, MAX);
+ 
+		if (!(strcmp(respuesta, "S") == 0 || strcmp(respuesta, "s") == 0)) {
+			repite = 0;
+			}
+			}
+ 		}while (repite);
+	}
+}
+ 
+void menuEliminar_usuario()
+{
+	User *usuarios;
+	User usuario;
+	int cedula;
+	char repite = 1;
+	char respuesta[MAX];
+	int numeroUsuarios;
+
+	system("cls");
+	usuarios = obtenerUsuarios(&numeroUsuarios); /* Retorna un vector dinamico de usuarios */
+
+ 	if (numeroUsuarios == 0) {
+		printf("\n\tEl archivo esta vacio!!\n");
+		system("pause>nul");
+	} 
+	
+	else {		
+	
+	do {
+		system("cls");
+		printf("\n\t\t\t    ELIMINAR UN USUARIO POR CEDULA   \n");
+ 
+		/* Se pide el placa del usuario a eliminar */
+		printf("\n\tCEDULA DEL USUARIO: ");
+		leecad(linea, MAX);
+		sscanf(linea, "%d", &cedula);
+								
+			if (cedula == 0){
+				printf("\n\tDesea continuar? [S/N]: ");
+				leecad(respuesta, MAX);
+ 
+				if (!(strcmp(respuesta, "S") == 0 || strcmp(respuesta, "s") == 0)) {
+				repite = 0;
+				}
+			}
+
+			else {
+ 
+		/* Se verifica que el usuario a buscar, exista */
+		if (existeUsuario(cedula, &usuario)) {
+ 
+			/* Se muestran los datos del usuario */
+			printf("\n\tNombre del usuario: %s\n", usuario.n_usuario);
+			printf("\n\tNombre del usuario: %s\n", usuario.nombre);
+			printf("\tApellido del usuario: %s\n", usuario.apellido);
+			printf("\tCedula: %d\n", usuario.cedula);
+ 
+			printf("\n\tSeguro que desea eliminar el usuario? [S/N]: ");
+			leecad(respuesta, MAX);
+			if (strcmp(respuesta, "S") == 0 || strcmp(respuesta, "s") == 0) {
+				if (eliminarUsuario(cedula) && eliminacionFisica_usuario()) {
+					printf("\n eliminado satisfactoriamente.\n");
+				} else {
+					printf("\n\tEl usuario no pudo ser eliminado\n");
+				}
+			}
+ 
+		} else {
+			/* El usuario no existe */
+			printf("\n\tEl usuario de cedula %d no existe.\n", cedula);
+		}
+ 
+		printf("\n\tDesea eliminar otro usuario? [S/N]: ");
+		leecad(respuesta, MAX);
+ 
+		if (!(strcmp(respuesta, "S") == 0 || strcmp(respuesta, "s") == 0)) {
+			repite = 0;
+		}
+ 
+		}
+		} while (repite);
+	}
+}
+ 
+  
+User *obtenerUsuarios(int *n)
+{
+	FILE *archivo;
+	User usuario;
+	User *usuarios; /* Vector dinamico de usuarios */
+	int i;
+ 
+	/* Abre el archivo en modo lectura */
+	archivo = fopen("usuarios.dat", "rb");
+ 
+	if (archivo == NULL) { /* Si no se pudo abrir el archivo, el valor de archivo es NULL */
+		*n = 0; /* No se pudo abrir. Se considera n  */
+		usuarios = NULL;
+ 
+	} else {
+ 
+		fseek(archivo, 0, SEEK_END); /* Posiciona el cursor al final del archivo */
+		*n = ftell(archivo) / sizeof(User); /* # de usuarios almacenados en el archivo. (# de registros) */
+		usuarios = (User *)malloc((*n) * sizeof(User)); /* Se reserva memoria para todos los usuarios almacenados en el archivo */
+ 
+		/* Se recorre el archivo secuencialmente */
+		fseek(archivo, 0, SEEK_SET); /* Posiciona el cursor al principio del archivo */
+		fread(&usuario, sizeof(usuario), 1, archivo);
+		i = 0;
+		while (!feof(archivo)) {
+			usuarios[i++] = usuario;
+			fread(&usuario, sizeof(usuario), 1, archivo);			
+		}
+ 
+		/* Cierra el archivo */
+		fclose(archivo);
+	}
+ 
+	return usuarios;
+}
+ 
+char existeUsuario(int cedula, User *usuario)
+{
+	FILE *archivo;
+	char existe;
+ 
+	/* Abre el archivo en modo lectura */
+	archivo = fopen("usuarios.dat", "rb");
+ 
+	if (archivo == NULL) { /* Si no se pudo abrir el archivo, el valor de archivo es NULL */
+		existe = 0;
+ 
+	} else {
+		existe = 0;
+ 
+		/* Se busca el usuario cuyo cedula coincida */
+		fread(&(*usuario), sizeof(*usuario), 1, archivo);
+		while (!feof(archivo)) {
+			if ((*usuario).cedula == cedula) {
+				existe = 1;
+				break;
+			}
+			fread(&(*usuario), sizeof(*usuario), 1, archivo);
+		}
+ 
+		/* Cierra el archivo */
+		fclose(archivo);
+	}
+ 
+	return existe;
+}
+ 
+ 
+char ingresarUsuario(User usuario)
+{
+	FILE *archivo;
+	char insercion;
+ 
+	/* Abre el archivo para agregar datos al final */
+	archivo = fopen("usuarios.dat", "ab");	/* Añade datos al final. Si el archivo no existe, es creado */
+ 
+	if (archivo == NULL) { /* Si no se pudo abrir el archivo, el valor de archivo es NULL */
+		insercion = 0;
+ 
+	} else {
+		fwrite(&usuario, sizeof(usuario), 1, archivo);
+		insercion = 1;
+ 
+		/* Cierra el archivo */
+		fclose(archivo);
+	}
+ 
+	return insercion;
+}
+ 
+/* ELiminacion logica de un registro */
+char eliminarUsuario(int cedula)
+{
+	FILE *archivo;
+	FILE *auxiliar;
+	User usuario;
+	char elimina;
+ 
+	/* Abre el archivo para leer */
+	archivo = fopen("usuarios.dat", "r+b");	/* Modo lectura/escritura. Si el archivo no existe, es creado */
+ 
+	if (archivo == NULL) { /* Si no se pudo abrir el archivo, el valor de archivo es NULL */
+		elimina = 0;
+ 
+	} else {
+		/* Se busca el registro que se quiere borrar. Cuando se encuentra, se situa en esa posicion mediante la 
+		funcion fseek y luego se modifica el campo clave de ese registro mediante algun valor centinela, eso se logra 
+		con fwrite. Hasta alli se ha logrado una eliminacion LOGICA. Porque el registro sigue ocupando espacio en el archivo fisico */
+ 
+		elimina = 0;
+		fread(&usuario, sizeof(usuario), 1, archivo);
+		while (!feof(archivo)) {
+			if (usuario.cedula == cedula) {
+				fseek(archivo, ftell(archivo) - sizeof(usuario), SEEK_SET);
+				usuario.cedula = VALOR_CENTINELA;
+				fwrite(&usuario, sizeof(usuario), 1, archivo);
+				elimina = 1;
+				break;
+			}
+			fread(&usuario, sizeof(usuario), 1, archivo);
+		}
+ 
+		/* Cierra el archivo */
+		fclose(archivo);
+	}
+ 
+	return elimina;
+}
+ 
+char eliminacionFisica_usuario()
+{
+	FILE *archivo;
+	FILE *temporal;
+	User usuario;
+	char elimina = 0;
+ 
+	archivo = fopen("usuarios.dat", "rb");
+	temporal = fopen("temporal.dat", "wb");
+ 
+	if (archivo == NULL || temporal == NULL) {
+		elimina = 0;
+	} else {
+		/* Se copia en el archivo temporal los registros validos */
+		fread(&usuario, sizeof(usuario), 1, archivo);
+		while (!feof(archivo)) {
+			if (usuario.cedula != VALOR_CENTINELA) {
+				fwrite(&usuario, sizeof(usuario), 1, temporal);
+			}
+			fread(&usuario, sizeof(usuario), 1, archivo);
+		}
+		/* Se cierran los archivos antes de borrar y renombrar */
+		fclose(archivo);
+		fclose(temporal);
+ 
+		remove("usuarios.dat");
+		rename("temporal.dat", "usuarios.dat");
+ 
+		elimina = 1;
+	}
+ 
+	return elimina;
+}
+
+
+// >>>>>>FUNCIONES PARA CLIENTES<<<<<<<<<<<<
+
+void menuCliente()
+{
+	char repite = 1;
+	int opcion = -1;
+	/* Cuando el usuario ingresa texto en lugar de ingresar una opcion. El programa no modifica
+	el valor de opcion. En ese caso, no se debe de ingresar a ninguno de los case, por eso se esta
+	inicializando la variable opcion con un valor que no permita ejecutar ningun case. Simplemente,
+	volver a interar y pedir nuevamente la opcion. */
+ 
+	do {
+ 
+		system( "COLOR 2" );//con esto solo cambiamos el color de nuestra fuente
+		system("cls");
+ 
+ 
+		printf("\n         MENU DE CLIENTES         \n");
+		printf("\n[1] Registrar nuevo cliente \n");
+		printf("\n[2] Buscar datos de cliente \n");
+		printf("\n[3] Modificar informacion de un cliente \n");
+		printf("\n[4] Eliminar datos de un cliente \n");
+		printf("\n[0] Salir\n");
+		printf("\nQue deseas hacer?: [ ]\b\b");
+ 
+		/* Lectura segura de un entero */
+		leecad(linea, MAX);
+		sscanf(linea, "%d", &opcion);
+ 
+		switch (opcion) {
+ 
+			case 1:
+				menuIngresar_cliente();
+				break;
+ 
+			case 2:
+				menuBuscar_cliente();
+				break; 
+ 
+			case 3:
+				menuModificar_cliente();
+				break;
+ 
+			case 4:
+				menuEliminar_cliente();
+				break;
+ 
+			case 0:
+				repite = 0;
+				break;
+		}
+ 
+	} while (repite);
+}
+
+void menuIngresar_cliente()
+{
+	Client cliente;
+	int cedula = 0;
+	char repite = 1;
+	char respuesta[MAX];
+ 
+	do {
+		system("cls");
+		printf("SISTEMA DE INGRESO DE CLIENTES \n");
+ 
+		/* Se pide la cedula del usuarios a ingresar */
+		printf("\n\tCedula del cliente: ");
+		leecad(linea, MAX);
+		sscanf(linea, "%d", &cedula);
+ 
+		/* Se verifica que el usuarios no haya sido almacenado anteriormente */
+		
+		if (cedula == 0){
+			printf("\n\tDesea continuar? [S/N]: ");
+			leecad(respuesta, MAX);
+ 
+			if (!(strcmp(respuesta, "S") == 0 || strcmp(respuesta, "s") == 0)) {
+			repite = 0;
+			}
+		}
+		else
+		{
+			if (!existeCliente(cedula, &cliente)) {
+ 
+				cliente.cedula = cedula;
+	
+				/* Se piden los demas datos del cliente a ingresar */
+				printf("\tNombre de cliente: ");
+				leecad(cliente.nombre, MAX);
+ 
+				printf("\tApellido: ");
+				leecad(cliente.apellido, MAX);
+ 
+				printf("\tEdad: ");
+				leecad(linea, MAX);
+				sscanf(linea, "%d", &cliente.edad);
+				
+				cliente.compras=0;
+ 
+					/* Se inserta el cliente en el archivo */
+				if (ingresarCliente(cliente)) {
+				printf("\n\tEl cliente fue insertado correctamente\n");
+ 				}
+			
+				else {
+					printf("\n\tOcurrio un error al intentar ingresar el cliente\n");
+					printf("\tIntentelo mas tarde\n");
+				}
+			}
+
+			else {
+			/* El cliente ya existe, no puede ser insertado. */
+			printf("\n\tEl cliente con la cedula %d ya existe.\n", cedula);
+			printf("\tNo puede ingresar dos clientes distintos con la misma cedula\n");
+			}
+ 
+			printf("\n\tDesea seguir ingresando clientes? [S/N]: ");
+			leecad(respuesta, MAX);
+ 
+			if (!(strcmp(respuesta, "S") == 0 || strcmp(respuesta, "s") == 0)) {
+			repite = 0;
+			}
+ 
+		}
+		
+	} while (repite);
+}
+
+void menuBuscar_cliente()
+ {
+	Client *clientes;
+	Client cliente;
+	int numeroClientes;
+	int cedula;
+	char repite = 1;
+	char respuesta[MAX];
+	
+	system("cls");
+	clientes = obtenerClientes(&numeroClientes); /* Retorna un vector dinamico de CLIENTES */
+
+ 	if (numeroClientes == 0) {
+		printf("\n\tEl archivo esta vacio!!\n");
+		system("pause>nul");
+	} 
+	
+	else {		
+		do {
+	
+			system("cls");
+			printf("\n\n\t\t\t BUSCAR CLIENTE POR CEDULA \n");
+ 
+			/* Se pide la ci del cliente a buscar */
+			printf("\n\tCedula: ");
+			leecad(linea, MAX);
+			sscanf(linea,"%d", &cedula);
+						
+			if (cedula == 0){
+				printf("\n\tDesea continuar? [S/N]: ");
+				leecad(respuesta, MAX);
+ 
+				if (!(strcmp(respuesta, "S") == 0 || strcmp(respuesta, "s") == 0)) {
+				repite = 0;
+				}
+			}
+
+			else {
+ 
+				/* Se verifica que el cliente a buscar, exista */
+				if (existeCliente(cedula, &cliente)) {
+
+				/* Se muestran los datos del usuario */
+				printf("\tNombre: %s \n", cliente.nombre);
+				printf("\tApellido: %s\n", cliente.apellido);		
+				printf("\tEdad: %d\n", cliente.edad);
+				printf("\tNumero de compras: %d \n",cliente.compras);			
+
+				} 
+				else {
+					/* El usuario no existe */
+					printf("\n\tEl cliente con la cedula %d no existe.\n", cedula);
+				};
+ 
+				printf("\n\tDesea seguir buscando algun cliente? [S/N]: ");
+				leecad(respuesta, MAX);
+	
+				if (!(strcmp(respuesta, "S") == 0 || strcmp(respuesta, "s") == 0))
+				{
+					repite = 0;
+				}
+			}
+		}	
+		while (repite);
+	}
+}
+
+
+void menuModificar_cliente()
+{
+	Client *clientes;
+	int numeroClientes;
+	FILE *archivo;
+	Client cliente;
+	int cedula;
+	int opcion = -1;
+	char repite = 1;
+	char existe;
+	char respuesta[MAX];
+	
+	system("cls");
+	clientes = obtenerClientes(&numeroClientes); /* Retorna un vector dinamico de usuarios */
+
+ 	if (numeroClientes == 0) {
+		printf("\n\tEl archivo esta vacio!!\n");
+		system("pause>nul");
+	} 
+	
+	else {		
+ 
+	do {
+		system("cls");
+		printf("\n      MODIFICAR UN CLIENTE   \n");
+
+		printf("\t-----------------------------------\n");
+		printf("\t", "OPCIONES PARA MODIFICAR");
+		printf("\t-----------------------------------\n");
+		printf("\t1. Modificar el nombre del cliente\n");
+		printf("\t2. Modificar el apellido del cliente\n");
+		printf("\t3. Modificar la cedula del cliente\n");	
+		printf("\t4. Modificar la edad del cliente\n");
+ 
+		/* Se pide la cedula del usuario a modificar */
+		printf("\n\tCedula del cliente: ");
+		leecad(linea, MAX);
+		sscanf(linea, "%d", &cedula);
+								
+			if (cedula == 0){
+				printf("\n\tDesea continuar? [S/N]: ");
+				leecad(respuesta, MAX);
+ 
+				if (!(strcmp(respuesta, "S") == 0 || strcmp(respuesta, "s") == 0)) {
+				repite = 0;
+				}
+			}
+
+			else {
+
+		/* Se verifica que el usuario a buscar exista */
+		if (existeCliente(cedula, &cliente)) {
+			
+			/* Se muestran los datos del usuario */
+			printf("\n\tNombre: %s\n", cliente.nombre);
+			printf("\tApellido: %s\n", cliente.apellido);
+			printf("\tCedula: %d\n", cliente.cedula);
+			printf("\tEdad: %d\n", cliente.edad);
+			printf("\n\n        Elija que dato quiere modificar?: [ ]\b\b");
+			leecad(linea, MAX);
+			sscanf(linea, "%d", &opcion);
+
+		/* Abre el archivo para lectura/escritura */
+		archivo = fopen("clientes.dat", "rb+");
+ 
+		if (archivo == NULL) { /* Si no se pudo abrir el archivo, el valor de archivo es NULL */} 
+		else {
+
+		switch (opcion){
+		
+			case 1:
+				printf("\n\tNombre del cliente actual: %s \n", cliente.nombre);
+				printf("\tIngrese nuevo nombre: ");
+				scanf("%s", &cliente.nombre);
+  	            fwrite(&cliente, sizeof(Client), 1, archivo);
+    	        printf("\tSe modifico el nombre del cliente\n");
+        	   break;
+
+			case 2:
+				printf("\n\tApellido del cliente actual: %s\n", cliente.apellido);
+				printf("\n\tIngrese nuevo el nuevo apellido: ");
+                scanf("%s",&cliente.apellido);
+                eliminarCliente(cedula);
+                eliminacionFisica_cliente();
+                fwrite(&cliente, sizeof(Client), 1, archivo);
+                printf("\tSe modifico el apellido del cliente\n");
+				break;
+
+			case 3:
+				printf("\n\tNumero de cedula actual del cliente: %d\n", cliente.cedula);
+				printf("\n\tIngrese la nueva cedula: ");
+                scanf("%d",&cliente.cedula);
+                eliminarCliente(cedula);
+                eliminacionFisica_cliente();
+                fwrite(&cliente, sizeof(Client), 1, archivo);
+                printf("\tSe modifico la cedula del cliente\n");
+				break;
+			
+			case 4:
+				printf("\n\tNumero de edad actual del cliente: %d\n", cliente.edad);
+				printf("\n\tIngrese la nueva edad: ");
+                scanf("%d",&cliente.edad);
+                eliminarCliente(cedula);
+                eliminacionFisica_cliente();
+                fwrite(&cliente, sizeof(Client), 1, archivo);
+                printf("\tSe modifico la edad del cliente\n");
+				break;
+
+			}
+
+		}fclose(archivo); }
+
+		else {
+			/* El usuario no existe */
+			printf("\n\tEl cliente de cedula %d no existe.\n", cedula);
+		}
+ 
+		printf("\n\tDesea modificar algun otro cliente? [S/N]: ");
+		leecad(respuesta, MAX);
+ 
+		if (!(strcmp(respuesta, "S") == 0 || strcmp(respuesta, "s") == 0)) {
+			repite = 0;
+			}
+			}
+ 		}while (repite);
+	}
+}
+ 
+void menuEliminar_cliente()
+{
+	Client *clientes;
+	Client cliente;
+	int cedula;
+	char repite = 1;
+	char respuesta[MAX];
+	int numeroClientes;
+
+	system("cls");
+	clientes = obtenerClientes(&numeroClientes); /* Retorna un vector dinamico de usuarios */
+
+ 	if (numeroClientes== 0) {
+		printf("\n\tEl archivo esta vacio!!\n");
+		system("pause>nul");
+	} 
+	
+	else {		
+	
+	do {
+		system("cls");
+		printf("\n\t\t\t    ELIMINAR UN CLIENTE POR CEDULA   \n");
+ 
+		/* Se pide el placa del usuario a eliminar */
+		printf("\n\tCEDULA DEL CLIENTE: ");
+		leecad(linea, MAX);
+		sscanf(linea, "%d", &cedula);
+								
+			if (cedula == 0){
+				printf("\n\tDesea continuar? [S/N]: ");
+				leecad(respuesta, MAX);
+ 
+				if (!(strcmp(respuesta, "S") == 0 || strcmp(respuesta, "s") == 0)) {
+				repite = 0;
+				}
+			}
+
+			else {
+ 
+		/* Se verifica que el usuario a buscar, exista */
+		if (existeCliente(cedula, &cliente)) {
+ 
+			/* Se muestran los datos del usuario */
+			printf("\n\tNombre del cliente: %s\n", cliente.nombre);
+			printf("\tApellido del cliente: %s\n", cliente.apellido);
+			printf("\tEdad del cliente: %d\n", cliente.edad);
+			printf("\tCedula: %d\n", cliente.cedula);
+ 
+			printf("\n\tSeguro que desea eliminar los datos del cliente? [S/N]: ");
+			leecad(respuesta, MAX);
+			if (strcmp(respuesta, "S") == 0 || strcmp(respuesta, "s") == 0) {
+				if (eliminarCliente(cedula) && eliminacionFisica_cliente()) {
+					printf("\n\teliminado satisfactoriamente.\n");
+				} else {
+					printf("\n\tEl cliente no pudo ser eliminado\n");
+				}
+			}
+ 
+		} else {
+			/* El usuario no existe */
+			printf("\n\tEl cliente de cedula %d no existe.\n", cedula);
+		}
+ 
+		printf("\n\tDesea eliminar otro cliente? [S/N]: ");
+		leecad(respuesta, MAX);
+ 
+		if (!(strcmp(respuesta, "S") == 0 || strcmp(respuesta, "s") == 0)) {
+			repite = 0;
+		}
+ 
+		}
+		} while (repite);
+	}
+}
+ 
+  
+Client *obtenerClientes(int *n)
+{
+	FILE *archivo;
+	Client cliente;
+	Client *clientes; /* Vector dinamico de usuarios */
+	int i;
+ 
+	/* Abre el archivo en modo lectura */
+	archivo = fopen("clientes.dat", "rb");
+ 
+	if (archivo == NULL) { /* Si no se pudo abrir el archivo, el valor de archivo es NULL */
+		*n = 0; /* No se pudo abrir. Se considera n  */
+		clientes = NULL;
+ 
+	} else {
+ 
+		fseek(archivo, 0, SEEK_END); /* Posiciona el cursor al final del archivo */
+		*n = ftell(archivo) / sizeof(Client); /* # de usuarios almacenados en el archivo. (# de registros) */
+		clientes = (Client *)malloc((*n) * sizeof(Client)); /* Se reserva memoria para todos los usuarios almacenados en el archivo */
+ 
+		/* Se recorre el archivo secuencialmente */
+		fseek(archivo, 0, SEEK_SET); /* Posiciona el cursor al principio del archivo */
+		fread(&cliente, sizeof(cliente), 1, archivo);
+		i = 0;
+		while (!feof(archivo)) {
+			clientes[i++] = cliente;
+			fread(&cliente, sizeof(cliente), 1, archivo);			
+		}
+ 
+		/* Cierra el archivo */
+		fclose(archivo);
+	}
+ 
+	return clientes;
+}
+ 
+char existeCliente(int cedula, Client *cliente)
+{
+	FILE *archivo;
+	char existe;
+ 
+	/* Abre el archivo en modo lectura */
+	archivo = fopen("clientes.dat", "rb");
+ 
+	if (archivo == NULL) { /* Si no se pudo abrir el archivo, el valor de archivo es NULL */
+		existe = 0;
+ 
+	} else {
+		existe = 0;
+ 
+		/* Se busca el usuario cuyo cedula coincida */
+		fread(&(*cliente), sizeof(*cliente), 1, archivo);
+		while (!feof(archivo)) {
+			if ((*cliente).cedula == cedula) {
+				existe = 1;
+				break;
+			}
+			fread(&(*cliente), sizeof(*cliente), 1, archivo);
+		}
+ 
+		/* Cierra el archivo */
+		fclose(archivo);
+	}
+ 
+	return existe;
+}
+ 
+ 
+char ingresarCliente(Client cliente)
+{
+	FILE *archivo;
+	char insercion;
+ 
+	/* Abre el archivo para agregar datos al final */
+	archivo = fopen("clientes.dat", "ab");	/* Añade datos al final. Si el archivo no existe, es creado */
+ 
+	if (archivo == NULL) { /* Si no se pudo abrir el archivo, el valor de archivo es NULL */
+		insercion = 0;
+ 
+	} else {
+		fwrite(&cliente, sizeof(cliente), 1, archivo);
+		insercion = 1;
+ 
+		/* Cierra el archivo */
+		fclose(archivo);
+	}
+ 
+	return insercion;
+}
+ 
+/* ELiminacion logica de un registro */
+char eliminarCliente(int cedula)
+{
+	FILE *archivo;
+	FILE *auxiliar;
+	Client cliente;
+	char elimina;
+ 
+	/* Abre el archivo para leer */
+	archivo = fopen("clientes.dat", "r+b");	/* Modo lectura/escritura. Si el archivo no existe, es creado */
+ 
+	if (archivo == NULL) { /* Si no se pudo abrir el archivo, el valor de archivo es NULL */
+		elimina = 0;
+ 
+	} else {
+		/* Se busca el registro que se quiere borrar. Cuando se encuentra, se situa en esa posicion mediante la 
+		funcion fseek y luego se modifica el campo clave de ese registro mediante algun valor centinela, eso se logra 
+		con fwrite. Hasta alli se ha logrado una eliminacion LOGICA. Porque el registro sigue ocupando espacio en el archivo fisico */
+ 
+		elimina = 0;
+		fread(&cliente, sizeof(cliente), 1, archivo);
+		while (!feof(archivo)) {
+			if (cliente.cedula == cedula) {
+				fseek(archivo, ftell(archivo) - sizeof(cliente), SEEK_SET);
+				cliente.cedula = VALOR_CENTINELA;
+				fwrite(&cliente, sizeof(cliente), 1, archivo);
+				elimina = 1;
+				break;
+			}
+			fread(&cliente, sizeof(cliente), 1, archivo);
+		}
+ 
+		/* Cierra el archivo */
+		fclose(archivo);
+	}
+ 
+	return elimina;
+}
+ 
+char eliminacionFisica_cliente()
+{
+	FILE *archivo;
+	FILE *temporal;
+	Client cliente;
+	char elimina = 0;
+ 
+	archivo = fopen("clientes.dat", "rb");
+	temporal = fopen("temporal.dat", "wb");
+ 
+	if (archivo == NULL || temporal == NULL) {
+		elimina = 0;
+	} else {
+		/* Se copia en el archivo temporal los registros validos */
+		fread(&cliente, sizeof(cliente), 1, archivo);
+		while (!feof(archivo)) {
+			if (cliente.cedula != VALOR_CENTINELA) {
+				fwrite(&cliente, sizeof(cliente), 1, temporal);
+			}
+			fread(&cliente, sizeof(cliente), 1, archivo);
+		}
+		/* Se cierran los archivos antes de borrar y renombrar */
+		fclose(archivo);
+		fclose(temporal);
+ 
+		remove("clientes.dat");
+		rename("temporal.dat", "clientes.dat");
+ 
+		elimina = 1;
+	}
+ 
+	return elimina;
+}
+ 
+int leecad(char *cad, int n)
+{
+	int i, c;
+ 
+	/* Hay que verificar si el buffer esta limpio o si hay un '\n'
+	  dejado por scanf y, en ese caso, limpiarlo:
+	*/
+ 
+	/* 1 COMPROBACION DE DATOS INICIALES EN EL BUFFER */
+ 
+	/* Empezamos leyendo el primer caracter que haya en la entrada. Si es
+	  EOF, significa que no hay nada por leer, asi que cerramos la cadena,
+	  dejandola "vacia" y salimos de la funcion retornando un valor de 0
+	  o falso, para indicar que hubo un error */
+	c = getchar();
+	if (c == EOF) {
+		cad[0] = '\0';
+		return 0;
+	}
+ 
+	/* Si el valor leido es '\n', significa que habia un caracter de nueva linea
+	dejado por un scanf o funcion similar. Simplemente inicializamos i a 0,
+	para indicar que los siguientes caracteres que leamos iremos asignando a
+	partir del primer caracter de la cadena. */
+	if (c == '\n') {
+		i = 0;
+	} else {
+	/* Si no habia un '\n', significa que el caracter que leimos es el primer
+	  caracter de la cadena introducida. En este caso, lo guardamos en la
+	  posicion 0 de cad, e inicializamos i a 1, porque en este caso, como ya
+	  tenemos el primer caracter de la cadena, continuaremos agregando 
+	  caracteres a partir del segundo.
+ 
+	*/
+		cad[0] = c;
+		i = 1;
+	}
+ 
+	/* 2. LECTURA DE LA CADENA */
+ 
+	/* El for empieza con un ; porque estamos omitiendo la inicializacion del contador,
+	ya que fue inicializado en el punto anterior.
+	Este placa lee un caracter a la vez,lo agrega a cad, y se repite hasta que
+	se encuentre un fin de linea, fin de archivo, o haya leido la cantidad maxima
+	de caracteres que se le indico. Luego, cierra la cadena agregando un '\0'
+	al final. Todo esto es muy similar a la forma en que los compiladores suelen
+	implementar la funcion fgets, solo que en lugar de getchar usan getc o fgetc
+	*/
+	for (; i < n - 1 && (c = getchar()) != EOF && c != '\n'; i++) {
+		cad[i] = c;
+	}
+	cad[i] = '\0';
+ 
+	/*3. LIMPIEZA DEL BUFFER */
+ 
+	/* Finalmente limpiamos el buffer si es necesario */
+	if (c != '\n' && c != EOF) /* es un caracter */
+		while ((c = getchar()) != '\n' && c != EOF);
+ 
+	/* La variable c contiene el ultimo caracter leido. Recordemos que habia 3 formas
+	de salir del for: que hayamos encontrando un '\n', un EOF, o que hayamos llegado
+	al maximo de caracteres que debemos leer. Si se da cualquiera de los dos
+	primeros casos, significa que leimos todo lo que habia en el buffer, por lo que
+	no hay nada que limpiar. En el tercer caso, el usuario escribio mas caracteres
+	de los debidos, que aun estan en el buffer, por lo que hay que quitarlos, para
+	lo cual usamos el metodo que vimos poco mas arriba
+	*/
+ 
+	return 1;
+}
+
+// Fin Funciones de usuarios y clientes
  
 // main
